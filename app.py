@@ -6,36 +6,8 @@ import pickle
 import tensorflow as tf
 from transformers import AutoTokenizer, DistilBertModel
 from groq import Groq
-from fastapi import FastAPI
-import uvicorn
-from threading import Thread
 
-# --- 1. API SERVER SETUP (For Real-Time IoT Connectivity) ---
-# Yeh hissa aapki app ko aik 'Server' bana deta hai jo background mein calls lega
-api_app = FastAPI()
-
-@api_app.post("/scan_iot")
-async def scan_iot(data: dict):
-    # Yeh endpoint doosri devices (mobile/laptop) se data receive karega
-    content = data.get("content", "")
-    device_id = data.get("device_id", "Unknown IoT Node")
-    return {
-        "status": "Connected",
-        "device": device_id,
-        "message": "Data received by XAI Cloud Hub",
-        "verdict": "Analyzing in real-time..."
-    }
-
-def run_api():
-    # Port 8000 par background server chalata hai
-    uvicorn.run(api_app, host="0.0.0.0", port=8000)
-
-# Dashboard ke saath background mein API server start karna
-if "api_started" not in st.session_state:
-    Thread(target=run_api, daemon=True).start()
-    st.session_state.api_started = True
-
-# --- 2. CONFIGURATION & MODELS SETUP ---
+# --- 1. CONFIGURATION & MODELS SETUP ---
 st.set_page_config(page_title="🛡️ XAI Cyber Guard", layout="wide")
 
 # API Setup
@@ -51,7 +23,7 @@ class DistilBertClassifier(torch.nn.Module):
         output = self.distilbert(input_ids=input_ids, attention_mask=attention_mask)
         return self.classifier(output[0][:, 0])
 
-# --- 3. HELPER FUNCTIONS ---
+# --- 2. HELPER FUNCTIONS ---
 @st.cache_resource
 def load_all_models():
     # Model Joiner logic
@@ -88,7 +60,7 @@ def get_ai_explanation(content, score, type="URL"):
     except:
         return "Anomaly detected matching phishing signatures. Use of deceptive linguistic patterns identified."
 
-# --- 4. UI LAYOUT ---
+# --- 3. UI LAYOUT ---
 st.title("🛡️ XAI Phishing Intelligence Hub")
 st.markdown("### Real-time IoT Threat Detection with Explainable AI")
 
@@ -99,7 +71,7 @@ with st.sidebar:
     st.info("AI Model: DistilBERT + CNN-LSTM")
     st.metric("Detected Threats", "12")
     st.write("---")
-    st.write("**API Gateway:** `http://localhost:8000/scan_iot` (Active)")
+    st.write("**IoT Integration Mode:** Live Browser Scanning")
 
 # Initialize Models
 try:
@@ -111,7 +83,7 @@ tab1, tab2 = st.tabs(["📧 Email Analysis", "🔗 URL Analysis"])
 
 # --- EMAIL TAB ---
 with tab1:
-    e_input = st.text_area("Paste email content", height=150)
+    e_input = st.text_area("Paste email content (IoT Node Input)", height=150)
     if st.button("Analyze Email", type="primary"):
         if e_input:
             inputs = tokenizer(e_input, return_tensors='pt', padding=True, truncation=True, max_length=512)
@@ -126,7 +98,7 @@ with tab1:
 
 # --- URL TAB ---
 with tab2:
-    u_input = st.text_input("Enter URL", placeholder="example.com")
+    u_input = st.text_input("Enter URL from Device", placeholder="example.com")
     if st.button("Scan URL", type="primary"):
         if u_input:
             cleaned = str(u_input).lower().replace('https://', '').replace('http://', '').replace('www.', '')
